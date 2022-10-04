@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using BepInEx;
 using HarmonyLib;
 
@@ -8,7 +10,7 @@ namespace AntiCensorship;
 public class AntiCensorship : BaseUnityPlugin
 {
 	private const string ModName = "Anti Censorship";
-	private const string ModVersion = "1.0.1";
+	private const string ModVersion = "1.0.2";
 	private const string ModGUID = "org.bepinex.plugins.anticensorship";
 
 	public void Awake()
@@ -18,12 +20,15 @@ public class AntiCensorship : BaseUnityPlugin
 		harmony.PatchAll(assembly);
 	}
 
-	[HarmonyPatch(typeof(CensorShittyWords), nameof(CensorShittyWords.Apply))]
+	[HarmonyPatch]
 	private static class BypassCensoring
 	{
-		private static bool Prefix(string str, out string __result)
+		static IEnumerable<MethodBase> TargetMethods() => typeof(CensorShittyWords).GetMethods().Where(m => m.Name == "Filter");
+
+		private static bool Prefix(string input, out string output, out bool __result)
 		{
-			__result = str;
+			output = input;
+			__result = false;
 			return false;
 		}
 	}
